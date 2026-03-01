@@ -1,4 +1,4 @@
-# KanjiLens ProGuard Rules (R8 Full Mode)
+# KanjiSage ProGuard Rules (R8 Full Mode)
 
 # Keep ML Kit classes
 -keep class com.google.mlkit.** { *; }
@@ -15,7 +15,7 @@
 -dontwarn okhttp3.internal.platform.**
 
 # Keep Room entities and DAOs
--keep class com.jworks.kanjilens.data.local.entities.** { *; }
+-keep class com.jworks.kanjisage.data.local.entities.** { *; }
 -keep class * extends androidx.room.RoomDatabase { *; }
 -keep @androidx.room.Entity class * { *; }
 

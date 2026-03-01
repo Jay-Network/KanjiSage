@@ -10,20 +10,27 @@ plugins {
 }
 
 android {
-    namespace = "com.jworks.kanjilens"
+    namespace = "com.jworks.kanjisage"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.jworks.kanjilens"
+        applicationId = "com.jworks.kanjisage"
         minSdk = 26
         targetSdk = 35
-        versionCode = 15
-        versionName = "1.6.0"
+        versionCode = 16
+        versionName = "1.6.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Gemini Vision API key (read from local.properties)
+        val localPropertiesFile = rootProject.file("local.properties")
+        val localProperties = Properties().apply {
+            if (localPropertiesFile.exists()) load(localPropertiesFile.inputStream())
+        }
+        buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY", "")}\"")
     }
 
     signingConfigs {
@@ -32,9 +39,9 @@ android {
             val localProperties = Properties().apply {
                 if (localPropertiesFile.exists()) load(localPropertiesFile.inputStream())
             }
-            storeFile = file(localProperties.getProperty("RELEASE_STORE_FILE", "../keystore/kanjilens-release.jks"))
+            storeFile = file(localProperties.getProperty("RELEASE_STORE_FILE", "../keystore/kanjisage-release.jks"))
             storePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD", "")
-            keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS", "kanjilens")
+            keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS", "kanjisage")
             keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD", "")
         }
     }
@@ -132,6 +139,9 @@ dependencies {
 
     // DataStore (settings persistence)
     implementation("androidx.datastore:datastore-preferences:1.1.2")
+
+    // Encrypted storage (secure API key storage)
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
