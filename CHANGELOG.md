@@ -6,6 +6,13 @@ Single source of truth for version: `VERSION` file at repo root.
 
 ---
 
+## [Unreleased]
+
+### Added
+### Changed
+### Fixed
+### Removed
+
 ## v1.6.1 (2026-03-01)
 
 ### Changed
