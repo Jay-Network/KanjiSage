@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jworks.kanjisage.R
+import com.jworks.kanjisage.ui.theme.GlassCard
 import com.jworks.kanjisage.ui.theme.KanjiSageColors
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
@@ -281,25 +282,32 @@ private fun OnboardingPageContent(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Subtitle with accent color
-        Text(
-            text = stringResource(page.subtitleRes),
-            fontSize = KanjiSageTypography.BodyMedium,
-            color = page.accentColor,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center
-        )
-
         Spacer(modifier = Modifier.height(20.dp))
 
-        Text(
-            text = stringResource(page.descriptionRes),
-            fontSize = KanjiSageTypography.Body,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
-            textAlign = TextAlign.Center,
-            lineHeight = 24.sp
-        )
+        GlassCard(
+            shape = KanjiSageShapes.Panel,
+            contentPadding = 20.dp
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // Subtitle with accent color
+                Text(
+                    text = stringResource(page.subtitleRes),
+                    fontSize = KanjiSageTypography.BodyMedium,
+                    color = page.accentColor,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = stringResource(page.descriptionRes),
+                    fontSize = KanjiSageTypography.Body,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 24.sp
+                )
+            }
+        }
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import com.jworks.kanjisage.ui.theme.focusBorder
+import com.jworks.kanjisage.ui.theme.GlassTopBar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -82,16 +83,10 @@ fun SettingsScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
 
     Column(modifier = Modifier.fillMaxSize()) {
-        TopAppBar(
-            title = { Text(stringResource(R.string.settings_title)) },
-            navigationIcon = {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_arrow_back),
-                        contentDescription = stringResource(R.string.settings_back)
-                    )
-                }
-            }
+        GlassTopBar(
+            title = stringResource(R.string.settings_title),
+            onBackClick = onBackClick,
+            backContentDescription = stringResource(R.string.settings_back)
         )
 
         Column(

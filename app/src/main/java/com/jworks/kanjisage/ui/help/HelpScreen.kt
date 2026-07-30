@@ -40,6 +40,7 @@ import com.jworks.kanjisage.BuildConfig
 import androidx.compose.ui.res.stringResource
 import com.jworks.kanjisage.R
 import com.jworks.kanjisage.ui.theme.GlassCard
+import com.jworks.kanjisage.ui.theme.GlassTopBar
 import com.jworks.kanjisage.ui.theme.KanjiSageColors
 import com.jworks.kanjisage.ui.theme.focusBorder
 import com.jworks.kanjisage.ui.theme.KanjiSageTypography
@@ -64,31 +65,11 @@ fun HelpScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
         // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(KanjiSageColors.DarkBg)
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_arrow_back),
-                contentDescription = stringResource(R.string.help_back),
-                modifier = Modifier
-                    .size(24.dp)
-                    .focusBorder(CircleShape)
-                    .clickable { onBackClick() },
-                tint = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = stringResource(R.string.help_title),
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = KanjiSageTypography.TitleSmall,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        GlassTopBar(
+            title = stringResource(R.string.help_title),
+            onBackClick = onBackClick,
+            backContentDescription = stringResource(R.string.help_back)
+        )
 
         Column(
             modifier = Modifier

@@ -50,6 +50,7 @@ import com.jworks.kanjisage.R
 import com.jworks.kanjisage.domain.models.BookmarkEntry
 import com.jworks.kanjisage.domain.repository.BookmarkRepository
 import com.jworks.kanjisage.ui.theme.GlassCard
+import com.jworks.kanjisage.ui.theme.GlassTopBar
 import com.jworks.kanjisage.ui.theme.KanjiSageColors
 import com.jworks.kanjisage.ui.theme.glassSurface
 import androidx.compose.ui.res.stringResource
@@ -95,31 +96,11 @@ fun BookmarksScreen(
             .background(KanjiSageColors.DarkBg)
     ) {
         // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(KanjiSageColors.DarkBg)
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_arrow_back),
-                contentDescription = stringResource(R.string.bookmarks_back),
-                modifier = Modifier
-                    .size(24.dp)
-                    .focusBorder(CircleShape)
-                    .clickable { onBackClick() },
-                tint = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = stringResource(R.string.bookmarks_title, totalCount),
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = KanjiSageTypography.TitleSmall,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        GlassTopBar(
+            title = stringResource(R.string.bookmarks_title, totalCount),
+            onBackClick = onBackClick,
+            backContentDescription = stringResource(R.string.bookmarks_back)
+        )
 
         // Tabs
         PrimaryTabRow(

@@ -54,6 +54,7 @@ import com.jworks.kanjisage.data.jcoin.JCoinClient
 import com.jworks.kanjisage.data.jcoin.JCoinEarnRules
 import com.jworks.kanjisage.data.subscription.SubscriptionManager
 import com.jworks.kanjisage.ui.theme.GlassCard
+import com.jworks.kanjisage.ui.theme.GlassTopBar
 import com.jworks.kanjisage.ui.theme.KanjiSageColors
 import androidx.compose.ui.res.stringResource
 import com.jworks.kanjisage.ui.theme.KanjiSageTypography
@@ -84,31 +85,11 @@ fun ProfileScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
         // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(KanjiSageColors.DarkBg)
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_arrow_back),
-                contentDescription = stringResource(R.string.profile_back),
-                modifier = Modifier
-                    .size(24.dp)
-                    .focusBorder(CircleShape)
-                    .clickable { onBackClick() },
-                tint = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = stringResource(R.string.profile_title),
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = KanjiSageTypography.TitleSmall,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        GlassTopBar(
+            title = stringResource(R.string.profile_title),
+            onBackClick = onBackClick,
+            backContentDescription = stringResource(R.string.profile_back)
+        )
 
         Column(
             modifier = Modifier

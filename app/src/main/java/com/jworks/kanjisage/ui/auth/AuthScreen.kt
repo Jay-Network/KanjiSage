@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jworks.kanjisage.data.auth.AuthRepository
+import com.jworks.kanjisage.ui.theme.GlassCard
 import com.jworks.kanjisage.ui.theme.KanjiSageColors
 import androidx.compose.ui.res.stringResource
 import com.jworks.kanjisage.R
@@ -201,21 +202,20 @@ fun AuthScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Benefits of linking
-            Column(
-                horizontalAlignment = Alignment.Start,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = stringResource(R.string.auth_why_link),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    fontSize = KanjiSageTypography.Label,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                BenefitItem(stringResource(R.string.auth_benefit_coins))
-                BenefitItem(stringResource(R.string.auth_benefit_sync))
-                BenefitItem(stringResource(R.string.auth_benefit_recover))
-                BenefitItem(stringResource(R.string.auth_benefit_journey))
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(horizontalAlignment = Alignment.Start) {
+                    Text(
+                        text = stringResource(R.string.auth_why_link),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        fontSize = KanjiSageTypography.Label,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    BenefitItem(stringResource(R.string.auth_benefit_coins))
+                    BenefitItem(stringResource(R.string.auth_benefit_sync))
+                    BenefitItem(stringResource(R.string.auth_benefit_recover))
+                    BenefitItem(stringResource(R.string.auth_benefit_journey))
+                }
             }
         }
     }

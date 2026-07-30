@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -41,6 +42,7 @@ import com.jworks.kanjisage.R
 import com.jworks.kanjisage.ui.theme.KanjiSageColors
 import androidx.compose.ui.res.stringResource
 import com.jworks.kanjisage.ui.theme.focusBorder
+import com.jworks.kanjisage.ui.theme.glassSurface
 import com.jworks.kanjisage.domain.models.DictionaryResult
 import com.jworks.kanjisage.ui.theme.KanjiSageTypography
 import com.jworks.kanjisage.ui.theme.KanjiSageShapes
@@ -114,7 +116,11 @@ fun DictionaryDetailView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(KanjiSageColors.PanelBorder)
+                .glassSurface(
+                    shape = RectangleShape,
+                    fillColor = KanjiSageColors.GlassSurfaceMedium,
+                    borderColor = KanjiSageColors.GlassBorder
+                )
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
