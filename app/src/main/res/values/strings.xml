@@ -3,7 +3,7 @@
     <string name="app_name">KanjiSage</string>
 
     <!-- Camera permissions -->
-    <string name="camera_permission_rationale">KanjiSage uses your camera to detect Japanese text in real time. No photos are saved or uploaded.</string>
+    <string name="camera_permission_rationale">KanjiSage uses your camera to detect Japanese text in real time, processed on your device. If you enable AI Enhance (Premium), the paused frame is sent to Google Gemini for analysis.</string>
     <string name="camera_permission_denied">To read Japanese text around you, please enable camera access in your device Settings.</string>
 
     <!-- Error messages (user-friendly) -->
@@ -70,16 +70,16 @@
     <!-- Onboarding screen -->
     <string name="onboarding_title_1">See Japanese Everywhere</string>
     <string name="onboarding_subtitle_1">Real-time kanji recognition</string>
-    <string name="onboarding_desc_1">Point your camera at any Japanese text\nand instantly see readings and meanings\nright on top of the text.</string>
+    <string name="onboarding_desc_1">Point your camera at any Japanese text\nand instantly see readings right on top of it.\nTap a word for its full meaning.</string>
     <string name="onboarding_title_2">Tap. Learn. Remember.</string>
     <string name="onboarding_subtitle_2">215,000+ dictionary entries</string>
-    <string name="onboarding_desc_2">Tap any detected word for its full definition.\nSave your favorites to study later.\nWorks completely offline.</string>
+    <string name="onboarding_desc_2">Tap any detected word for its full definition.\nSave your favorites to study later.\nThe built-in dictionary works offline.</string>
     <string name="onboarding_title_3">Earn J Coins</string>
     <string name="onboarding_subtitle_3">Real rewards for learning</string>
     <string name="onboarding_desc_3">Every scan, every lookup, every streak\nearns you J Coins. Redeem them for\ntutoring sessions and app credits.</string>
     <string name="onboarding_title_4">Ready to Scan!</string>
     <string name="onboarding_subtitle_4">5 free scans daily, no sign-up needed</string>
-    <string name="onboarding_desc_4">Start scanning right now.\nCreate an account to earn J Coins,\nsync your bookmarks, and go unlimited.</string>
+    <string name="onboarding_desc_4">Start scanning right now.\nCreate an account to earn J Coins\nand sync your bookmarks. Upgrade to Premium\nfor unlimited scans.</string>
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_start_scanning">Start Scanning</string>
     <string name="onboarding_next">Next</string>
@@ -190,14 +190,11 @@
     <string name="paywall_plan_annual">Annual</string>
     <string name="paywall_period_month">/month</string>
     <string name="paywall_period_year">/year</string>
-    <string name="paywall_save_percent">Save 37%%</string>
     <string name="paywall_subscribe">Start Reading Unlimited</string>
     <string name="paywall_loading">Loading prices from Google Play…</string>
     <string name="paywall_keep_free">Keep using free scans</string>
     <string name="paywall_not_now">Not right now</string>
     <string name="paywall_cancel_note">Cancel anytime. Managed by Google Play.</string>
-    <string name="paywall_bundle_title">Bundle &amp; Save</string>
-    <string name="paywall_bundle_desc">Get KanjiSage + KanjiJourney together for $5.99/mo and save $1 every month</string>
 
     <!-- Auth screen -->
     <string name="auth_back">← Back</string>

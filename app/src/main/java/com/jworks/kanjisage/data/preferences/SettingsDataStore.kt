@@ -30,6 +30,7 @@ class SettingsDataStore(private val context: Context) {
         val PARTIAL_MODE_BOUNDARY_RATIO = floatPreferencesKey("partial_mode_boundary_ratio")
         val VERTICAL_TEXT_MODE = booleanPreferencesKey("vertical_text_mode")
         val FURIGANA_ADAPTIVE_COLOR = booleanPreferencesKey("furigana_adaptive_color")
+        val AI_ENHANCE_ENABLED = booleanPreferencesKey("ai_enhance_enabled")
         val HAS_SEEN_ONBOARDING = booleanPreferencesKey("has_seen_onboarding")
         val GEMINI_INPUT_TOKENS = longPreferencesKey("gemini_input_tokens")
         val GEMINI_OUTPUT_TOKENS = longPreferencesKey("gemini_output_tokens")
@@ -53,6 +54,7 @@ class SettingsDataStore(private val context: Context) {
             partialModeBoundaryRatio = prefs[Keys.PARTIAL_MODE_BOUNDARY_RATIO] ?: defaults.partialModeBoundaryRatio,
             verticalTextMode = prefs[Keys.VERTICAL_TEXT_MODE] ?: defaults.verticalTextMode,
             furiganaAdaptiveColor = prefs[Keys.FURIGANA_ADAPTIVE_COLOR] ?: defaults.furiganaAdaptiveColor,
+            aiEnhanceEnabled = prefs[Keys.AI_ENHANCE_ENABLED] ?: defaults.aiEnhanceEnabled,
             geminiInputTokens = prefs[Keys.GEMINI_INPUT_TOKENS] ?: 0L,
             geminiOutputTokens = prefs[Keys.GEMINI_OUTPUT_TOKENS] ?: 0L,
             claudeInputTokens = prefs[Keys.CLAUDE_INPUT_TOKENS] ?: 0L,
@@ -84,6 +86,7 @@ class SettingsDataStore(private val context: Context) {
             prefs[Keys.PARTIAL_MODE_BOUNDARY_RATIO] = settings.partialModeBoundaryRatio
             prefs[Keys.VERTICAL_TEXT_MODE] = settings.verticalTextMode
             prefs[Keys.FURIGANA_ADAPTIVE_COLOR] = settings.furiganaAdaptiveColor
+            prefs[Keys.AI_ENHANCE_ENABLED] = settings.aiEnhanceEnabled
         }
     }
 

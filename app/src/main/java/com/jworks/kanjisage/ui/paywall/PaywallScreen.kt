@@ -141,7 +141,6 @@ fun PaywallScreen(
                 title = stringResource(R.string.paywall_plan_annual),
                 price = annualPrice,
                 period = stringResource(R.string.paywall_period_year),
-                savings = stringResource(R.string.paywall_save_percent),
                 isSelected = selectedPlan == BillingManager.PRODUCT_ANNUAL,
                 onClick = { selectedPlan = BillingManager.PRODUCT_ANNUAL }
             )
@@ -198,31 +197,8 @@ fun PaywallScreen(
                 fontSize = KanjiSageTypography.LabelSmall,
                 textAlign = TextAlign.Center
             )
-
-            // Bundle promo
-            Spacer(modifier = Modifier.height(24.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(KanjiSageShapes.Card)
-                    .background(KanjiSageColors.ActiveCard)
-                    .padding(16.dp)
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.paywall_bundle_title),
-                        color = KanjiSageColors.CoinAccent,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = KanjiSageTypography.Body
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.paywall_bundle_desc),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        fontSize = KanjiSageTypography.Label
-                    )
-                }
-            }
+            // Bundle promo removed 2026-09-03: no bundle product exists in BillingManager
+            // (JA UI review finding) — re-add only once a real, purchasable bundle SKU ships.
         }
     }
 }

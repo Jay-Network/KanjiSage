@@ -17,8 +17,8 @@ android {
         applicationId = "com.jworks.kanjisage"
         minSdk = 26
         targetSdk = 35
-        versionCode = 21
-        versionName = "1.8.13"
+        versionCode = 22
+        versionName = "1.8.16"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

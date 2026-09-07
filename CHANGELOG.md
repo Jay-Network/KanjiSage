@@ -1,5 +1,12 @@
 # KanjiSage Changelog
 
+## v1.8.16 (2026-09-07)
+- fix(settings): AI Enhance toggle now persists — `SettingsDataStore` reads/writes the `ai_enhance_enabled` key, which it never did before, so a user's "off" choice no longer reverts to enabled on reload (JA UI review PL-5).
+- fix(paywall): removed the hardcoded "Save 37%" badge (wrong — the $0.99/mo vs $4.99/yr pair is ~58%, and Play prices are localized so any hardcoded percentage drifts) and removed the non-functional "Bundle & Save" promo box that advertised a bundle SKU `BillingManager` never queries (PL-6).
+- fix(strings): corrected copy that overclaimed vs shipping behavior — camera privacy notice now discloses the Gemini upload path used by AI Enhance (PL-5); onboarding no longer claims the overlay shows *meanings* (it shows readings), "works completely offline" (only the bundled dictionary is), or that account creation grants unlimited scans (Premium does) (PL-7).
+- chore: reconciled version drift — app `build.gradle.kts` 1.8.13/vc21 → 1.8.16/vc22, app `VERSION` 1.8.2 → 1.8.16, workspace `VERSION`/`CHANGELOG` 1.8.15 → 1.8.16. All version-stamped sites now agree (PL-1).
+- Verified: `compileDebugKotlin` + `testDebugUnitTest` BUILD SUCCESSFUL, 103 unit tests / 0 failures.
+
 ## v1.8.2 (2026-05-07)
 - chore: add fleet CODEOWNERS generated from agent-repo-map.json.
 
