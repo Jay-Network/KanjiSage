@@ -1,5 +1,9 @@
 # KanjiSage Changelog
 
+## v1.8.17 (2026-09-24)
+- fix(furigana): the Kuroshiro backend fallback (`AppModule.provideRetrofit()`) hardcoded a dev-only LAN IP (`http://192.168.1.100:3000`) unreachable from any real device, and used Retrofit's default 10s connect timeout — so every dictionary-miss furigana lookup would hang up to 10s before failing. No production backend was ever deployed. Added a short-timeout `OkHttpClient` (1s connect / 2s read+write) so the dead fallback fails fast; the bundled 180k-entry JMDict database remains the fully-working primary path (`FuriganaRepositoryImpl` already degraded gracefully on fallback failure, it just needed to fail *fast*). No new infrastructure, fully reversible. This was Jay's #1 priority blocker on the internal-testing AAB.
+- chore: version bump 1.8.16/vc22 -> 1.8.17/vc23.
+
 ## v1.8.16 (2026-09-07)
 - fix(settings): AI Enhance toggle now persists — `SettingsDataStore` reads/writes the `ai_enhance_enabled` key, which it never did before, so a user's "off" choice no longer reverts to enabled on reload (JA UI review PL-5).
 - fix(paywall): removed the hardcoded "Save 37%" badge (wrong — the $0.99/mo vs $4.99/yr pair is ~58%, and Play prices are localized so any hardcoded percentage drifts) and removed the non-functional "Bundle & Save" promo box that advertised a bundle SKU `BillingManager` never queries (PL-6).

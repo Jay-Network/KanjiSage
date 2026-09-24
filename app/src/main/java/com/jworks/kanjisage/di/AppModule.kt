@@ -18,8 +18,10 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
@@ -37,13 +39,25 @@ object AppModule {
     @Provides
     @Singleton
     fun provideRetrofit(): Retrofit {
+        // No production Kuroshiro backend is deployed anywhere reachable by a real device.
+        // FuriganaRepositoryImpl only calls this as a last-resort fallback after the bundled
+        // 180k-entry JMDict database misses, and already catches failure gracefully — so this
+        // client just needs to fail FAST rather than hang on Retrofit's 10s default connect
+        // timeout on every real-user cache miss. The LAN IP below only ever resolves during
+        // local dev (running backend/server.js on the same network as a physical test device).
         val baseUrl = if (Build.FINGERPRINT.contains("generic")) {
-            "http://10.0.2.2:3000/"  // Emulator
+            "http://10.0.2.2:3000/"  // Emulator -> host loopback
         } else {
-            "http://192.168.1.100:3000/"  // Physical device on local network
+            "http://192.168.1.100:3000/"  // Dev-only LAN fallback; unreachable for real users by design
         }
+        val client = OkHttpClient.Builder()
+            .connectTimeout(1, TimeUnit.SECONDS)
+            .readTimeout(2, TimeUnit.SECONDS)
+            .writeTimeout(2, TimeUnit.SECONDS)
+            .build()
         return Retrofit.Builder()
             .baseUrl(baseUrl)
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
