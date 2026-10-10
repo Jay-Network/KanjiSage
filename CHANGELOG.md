@@ -2,6 +2,7 @@
 
 ## v1.8.18 (2026-10-09)
 - build: raise compileSdk/targetSdk to 36 and use AGP 8.10.1 with Gradle 8.11.1 for Android 16 support.
+- build: align Kotlin, Compose and serialization plugins to 2.2.20 with KSP 2.2.20-2.0.3 to consume Billing 8.3's Kotlin 2.2 metadata.
 - fix(billing): upgrade Play Billing to 8.3.0; consume QueryProductDetailsResult and report unfetched product IDs/status codes while retaining successfully fetched subscriptions. Preserve the existing explicit pending-purchase parameters.
 - chore: align versionName and VERSION to 1.8.18, versionCode 24. Device/purchase-sheet verification and Play submission are separate from this source change.
 
