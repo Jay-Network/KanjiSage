@@ -1,5 +1,10 @@
 # KanjiSage Changelog
 
+## v1.8.18 (2026-10-09)
+- build: raise compileSdk/targetSdk to 36 and use AGP 8.10.1 with Gradle 8.11.1 for Android 16 support.
+- fix(billing): upgrade Play Billing to 8.3.0; consume QueryProductDetailsResult and report unfetched product IDs/status codes while retaining successfully fetched subscriptions. Preserve the existing explicit pending-purchase parameters.
+- chore: align versionName and VERSION to 1.8.18, versionCode 24. Device/purchase-sheet verification and Play submission are separate from this source change.
+
 ## v1.8.17 (2026-09-24)
 - fix(furigana): the Kuroshiro backend fallback (`AppModule.provideRetrofit()`) hardcoded a dev-only LAN IP (`http://192.168.1.100:3000`) unreachable from any real device, and used Retrofit's default 10s connect timeout — so every dictionary-miss furigana lookup would hang up to 10s before failing. No production backend was ever deployed. Added a short-timeout `OkHttpClient` (1s connect / 2s read+write) so the dead fallback fails fast; the bundled 180k-entry JMDict database remains the fully-working primary path (`FuriganaRepositoryImpl` already degraded gracefully on fallback failure, it just needed to fail *fast*). No new infrastructure, fully reversible. This was Jay's #1 priority blocker on the internal-testing AAB.
 - chore: version bump 1.8.16/vc22 -> 1.8.17/vc23.

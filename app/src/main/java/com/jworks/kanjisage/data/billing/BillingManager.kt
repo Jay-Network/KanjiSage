@@ -84,10 +84,14 @@ class BillingManager @Inject constructor(
             .setProductList(productList)
             .build()
 
-        billingClient?.queryProductDetailsAsync(params) { result, detailsList ->
+        billingClient?.queryProductDetailsAsync(params) { result, queryResult ->
             if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                val detailsList = queryResult.productDetailsList
                 _productDetails.value = detailsList.associateBy { it.productId }
                 Log.d(TAG, "Products loaded: ${detailsList.map { it.productId }}")
+                queryResult.unfetchedProductList.forEach { product ->
+                    Log.w(TAG, "Product unavailable: ${product.productId}, status=${product.statusCode}")
+                }
             } else {
                 Log.w(TAG, "Product query failed: ${result.debugMessage}")
             }

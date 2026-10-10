@@ -11,14 +11,14 @@ plugins {
 
 android {
     namespace = "com.jworks.kanjisage"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.jworks.kanjisage"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 23
-        versionName = "1.8.17"
+        targetSdk = 36
+        versionCode = 24
+        versionName = "1.8.18"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -167,7 +167,7 @@ dependencies {
     implementation("io.ktor:ktor-client-android:2.3.8")
 
     // Google Play Billing
-    implementation("com.android.billingclient:billing-ktx:7.1.1")
+    implementation("com.android.billingclient:billing-ktx:8.3.0")
 
     // WorkManager (offline J Coin sync)
     implementation("androidx.work:work-runtime-ktx:2.10.0")
