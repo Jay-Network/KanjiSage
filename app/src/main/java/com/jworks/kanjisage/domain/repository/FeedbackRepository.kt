@@ -6,6 +6,7 @@ import com.jworks.kanjisage.domain.models.SubmitFeedbackResult
 
 interface FeedbackRepository {
     suspend fun submitFeedback(
+        accessToken: String,
         email: String,
         appId: String,
         category: FeedbackCategory,
@@ -14,12 +15,14 @@ interface FeedbackRepository {
     ): SubmitFeedbackResult
 
     suspend fun getFeedbackUpdates(
+        accessToken: String,
         email: String,
         appId: String,
         sinceId: Long? = null
     ): List<FeedbackWithHistory>
 
     suspend fun registerFcmToken(
+        accessToken: String,
         email: String,
         appId: String,
         fcmToken: String,

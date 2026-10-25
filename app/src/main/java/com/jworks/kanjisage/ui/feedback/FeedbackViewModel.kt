@@ -78,7 +78,8 @@ class FeedbackViewModel @Inject constructor(
 
     fun submitFeedback() {
         val userEmail = getCachedEmail()
-        if (userEmail == null) {
+        val accessToken = authRepository.getAccessToken()
+        if (userEmail == null || accessToken.isNullOrBlank()) {
             _uiState.value = _uiState.value.copy(error = "Sign in to send feedback")
             return
         }
@@ -104,6 +105,7 @@ class FeedbackViewModel @Inject constructor(
             )
 
             when (val result = feedbackRepository.submitFeedback(
+                accessToken = accessToken,
                 email = userEmail,
                 appId = APP_ID,
                 category = _uiState.value.selectedCategory,
@@ -141,12 +143,14 @@ class FeedbackViewModel @Inject constructor(
 
     private fun loadFeedbackHistory() {
         val userEmail = getCachedEmail() ?: return
+        val accessToken = authRepository.getAccessToken()?.takeIf { it.isNotBlank() } ?: return
 
         _uiState.value = _uiState.value.copy(isLoadingHistory = true)
 
         viewModelScope.launch {
             try {
                 val feedback = feedbackRepository.getFeedbackUpdates(
+                    accessToken = accessToken,
                     email = userEmail,
                     appId = APP_ID,
                     sinceId = null
@@ -174,9 +178,11 @@ class FeedbackViewModel @Inject constructor(
             while (isActive) {
                 delay(POLL_INTERVAL_MS)
                 val userEmail = getCachedEmail() ?: continue
+                val accessToken = authRepository.getAccessToken()?.takeIf { it.isNotBlank() } ?: continue
 
                 try {
                     val newFeedback = feedbackRepository.getFeedbackUpdates(
+                        accessToken = accessToken,
                         email = userEmail,
                         appId = APP_ID,
                         sinceId = lastFeedbackId

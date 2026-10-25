@@ -25,7 +25,8 @@ import java.util.UUID
 
 /** Explicitly opted-in emulator check, not part of routine connected tests.
  * Requires owner-confirmed fleet mailbox aliases and a temporary membership value.
- * Stages: preflight -> signupA -> mailbox receipt -> preconfirmA -> link click -> confirmA -> signupB ->
+ * Stages: preflight -> signupA -> mailbox receipt -> preconfirmA -> link click -> confirmA ->
+ * owner customer-label confirmation -> feedbackA -> signupB ->
  * second mailbox/link confirmation -> probeB. A single owner-authorized retry is limited to the rolled-back A signup.
  * Approval: jayhub:0 dlg-254d005632a54fb5aa188587, relayed by jayhub:110.
  * No service-role credentials, earn/spend calls, feedback submissions or deletions.
@@ -147,10 +148,21 @@ class JCoinMigrationTest {
     }
 
     private suspend fun feedbackIdentityCheck(email: String, fixture: Fixture) {
+        check(state.getString("signup_email_A", null) == email) { "Fixture identity mismatch" }
+        val password = checkNotNull(state.getString("signup_password_A", null))
+        // Owner labeling can outlast the session saved by confirmA; refresh before this read.
+        val (signInStatus, signInBody) = request("sign_in_A_feedback", HttpMethod.Post,
+            "/auth/v1/token?grant_type=password",
+            body = JSONObject().put("email", email).put("password", password))
+        assertEquals("Feedback fixture sign-in HTTP", 200, signInStatus)
+        val session = JSONObject(signInBody)
+        assertEquals("Feedback fixture user", fixture.userId, session.getJSONObject("user").getString("id"))
+        val token = session.getString("access_token")
+        check(token.isNotBlank())
         val queryEmail = URLEncoder.encode(email, "UTF-8")
         // Match the app's functions.invoke default: POST with no request body.
         val (status, body) = request("feedback_identity_A", HttpMethod.Post,
-            "/functions/v1/feedback-get-updates?user_email=$queryEmail&app_id=kanjilens", fixture.token)
+            "/functions/v1/feedback-get-updates?user_email=$queryEmail&app_id=kanjilens", token)
         assertEquals("Feedback identity HTTP", 200, status)
         val response = JSONObject(body)
         val data = response.getJSONObject("data")
@@ -159,6 +171,19 @@ class JCoinMigrationTest {
         assertEquals("New fixture feedback count", 0, feedback.length())
         if (data.has("count")) assertEquals("Reported feedback count", 0, data.getInt("count"))
         if (response.has("count")) assertEquals("Reported feedback count", 0, response.getInt("count"))
+
+        // The customer now owns this email: an anonymous bearer must not authorize its history.
+        val (anonymousStatus, anonymousBody) = request("feedback_identity_A_without_user_jwt",
+            HttpMethod.Post,
+            "/functions/v1/feedback-get-updates?user_email=$queryEmail&app_id=kanjilens")
+        val anonymousResponse = runCatching { JSONObject(anonymousBody) }.getOrNull()
+        val rawCode = anonymousResponse?.optJSONObject("error")?.optString("code")
+            ?.takeIf { it.isNotBlank() }
+            ?: anonymousResponse?.optString("error_code")?.takeIf { it.isNotBlank() }
+            ?: anonymousResponse?.optString("code").orEmpty()
+        val code = rawCode.takeIf { it.matches(Regex("[A-Za-z0-9_]{1,64}")) } ?: "UNRECOGNIZED"
+        record("feedback_identity_A_without_user_jwt", "http" to anonymousStatus, "error_code" to code)
+        assertEquals("Owned email must refuse an anonymous bearer", 401, anonymousStatus)
         check(state.edit().putBoolean("feedback_A_passed", true).commit())
     }
 
@@ -245,7 +270,7 @@ class JCoinMigrationTest {
         check(emailA != emailB && listOf(emailA, emailB).all { it.substringAfter('@') == mailboxDomain })
         val probeMembership = requireNotNull(args.getString("probeMembership"))
         val stage = requireNotNull(args.getString("stage"))
-        check(stage in setOf("preflight", "signupA", "preconfirmA", "confirmA", "signupB", "probeB"))
+        check(stage in setOf("preflight", "signupA", "preconfirmA", "confirmA", "feedbackA", "signupB", "probeB"))
         try {
             if (stage == "preflight") {
                 val attemptedA = state.getBoolean("attempted_A", false)
@@ -276,8 +301,16 @@ class JCoinMigrationTest {
                 "First mailbox receipt must match the preconfirmation check"
             }
             if (stage == "confirmA") {
-                feedbackIdentityCheck(emailA, confirmFixture("A", emailA))
-                record("fixture_A_ready", "next_stage" to "signupB")
+                confirmFixture("A", emailA)
+                record("fixture_A_ready", "next_step" to "owner_customer_label_confirmation")
+                return@runBlocking
+            }
+            if (stage == "feedbackA") {
+                check(args.getString("fixtureALabelConfirmed") == "true") {
+                    "Database owner must confirm A's test_account label before feedbackA"
+                }
+                feedbackIdentityCheck(emailA, loadFixture("A", emailA))
+                record("fixture_A_feedback_ready", "next_stage" to "signupB")
                 return@runBlocking
             }
             check(state.getBoolean("feedback_A_passed", false)) { "A feedback identity check required before B" }

@@ -11,6 +11,8 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.jworks.kanjisage.MainActivity
 import com.jworks.kanjisage.R
+import com.jworks.kanjisage.data.auth.AuthRepository
+import com.jworks.kanjisage.data.auth.AuthState
 import com.jworks.kanjisage.domain.repository.FeedbackRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -25,11 +27,12 @@ class FeedbackFCMService : FirebaseMessagingService() {
     @Inject
     lateinit var feedbackRepository: FeedbackRepository
 
+    @Inject
+    lateinit var authRepository: AuthRepository
+
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     companion object {
-        private const val PREFS_NAME = "kanjisage_prefs"
-        private const val EMAIL_KEY = "user_email"
         private const val CHANNEL_ID = "feedback_updates"
         private const val CHANNEL_NAME = "Feedback Updates"
         private const val NOTIFICATION_ID = 1001
@@ -40,10 +43,13 @@ class FeedbackFCMService : FirebaseMessagingService() {
         super.onNewToken(token)
 
         serviceScope.launch {
-            val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val userEmail = prefs.getString(EMAIL_KEY, null) ?: return@launch
+            val signedIn = authRepository.authState.value as? AuthState.SignedIn ?: return@launch
+            if (signedIn.isAnonymous) return@launch
+            val userEmail = signedIn.user.email ?: return@launch
+            val accessToken = authRepository.getAccessToken()?.takeIf { it.isNotBlank() } ?: return@launch
 
             feedbackRepository.registerFcmToken(
+                accessToken = accessToken,
                 email = userEmail,
                 appId = APP_ID,
                 fcmToken = token,

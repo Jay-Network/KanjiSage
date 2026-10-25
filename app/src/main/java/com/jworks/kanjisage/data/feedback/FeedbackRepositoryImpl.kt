@@ -10,6 +10,10 @@ import com.jworks.kanjisage.domain.repository.FeedbackRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.functions.functions
 import io.ktor.client.call.body
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.contentType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -32,6 +36,7 @@ class FeedbackRepositoryImpl @Inject constructor(
     private val json = Json { ignoreUnknownKeys = true }
 
     override suspend fun submitFeedback(
+        accessToken: String,
         email: String,
         appId: String,
         category: FeedbackCategory,
@@ -39,9 +44,11 @@ class FeedbackRepositoryImpl @Inject constructor(
         deviceInfo: Map<String, String>?
     ): SubmitFeedbackResult = withContext(Dispatchers.IO) {
         try {
-            val response = supabaseClient.functions.invoke(
-                function = "feedback-submit",
-                body = buildJsonObject {
+            require(accessToken.isNotBlank()) { "Sign in required" }
+            val response = supabaseClient.functions.invoke("feedback-submit") {
+                headers[HttpHeaders.Authorization] = "Bearer $accessToken"
+                contentType(ContentType.Application.Json)
+                setBody(buildJsonObject {
                     put("user_email", email)
                     put("app_id", appId)
                     put("category", category.value)
@@ -53,8 +60,8 @@ class FeedbackRepositoryImpl @Inject constructor(
                             }
                         }
                     }
-                }
-            )
+                }.toString())
+            }
 
             val responseBody = json.parseToJsonElement(response.body<String>()).jsonObject
 
@@ -83,22 +90,20 @@ class FeedbackRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getFeedbackUpdates(
+        accessToken: String,
         email: String,
         appId: String,
         sinceId: Long?
     ): List<FeedbackWithHistory> = withContext(Dispatchers.IO) {
         try {
-            val queryParams = buildString {
-                append("user_email=$email")
-                append("&app_id=$appId")
-                if (sinceId != null) {
-                    append("&since_id=$sinceId")
-                }
+            require(accessToken.isNotBlank()) { "Sign in required" }
+            val response = supabaseClient.functions.invoke("feedback-get-updates") {
+                headers[HttpHeaders.Authorization] = "Bearer $accessToken"
+                // URLBuilder encodes each value, including '+' in mailbox aliases.
+                url.parameters.append("user_email", email)
+                url.parameters.append("app_id", appId)
+                if (sinceId != null) url.parameters.append("since_id", sinceId.toString())
             }
-
-            val response = supabaseClient.functions.invoke(
-                function = "feedback-get-updates?$queryParams"
-            )
 
             if (response.status.value !in 200..299) return@withContext emptyList()
 
@@ -149,15 +154,18 @@ class FeedbackRepositoryImpl @Inject constructor(
     }
 
     override suspend fun registerFcmToken(
+        accessToken: String,
         email: String,
         appId: String,
         fcmToken: String,
         deviceInfo: Map<String, String>?
     ): Boolean = withContext(Dispatchers.IO) {
         try {
-            val response = supabaseClient.functions.invoke(
-                function = "fcm-register-token",
-                body = buildJsonObject {
+            require(accessToken.isNotBlank()) { "Sign in required" }
+            val response = supabaseClient.functions.invoke("fcm-register-token") {
+                headers[HttpHeaders.Authorization] = "Bearer $accessToken"
+                contentType(ContentType.Application.Json)
+                setBody(buildJsonObject {
                     put("user_email", email)
                     put("app_id", appId)
                     put("fcm_token", fcmToken)
@@ -168,8 +176,8 @@ class FeedbackRepositoryImpl @Inject constructor(
                             }
                         }
                     }
-                }
-            )
+                }.toString())
+            }
 
             response.status.value in 200..299
         } catch (e: Exception) {

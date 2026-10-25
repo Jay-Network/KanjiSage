@@ -4,8 +4,10 @@ import android.util.Log
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.functions.functions
 import io.ktor.client.call.body
-import io.ktor.http.Headers
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.contentType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -76,19 +78,17 @@ class JCoinClient @Inject constructor(
         return root["data"] ?: throw Exception("Response missing 'data' field: $body")
     }
 
-    private fun buildHeaders(accessToken: String): Headers = Headers.build {
-        append(HttpHeaders.Authorization, "Bearer $accessToken")
-    }
-
     suspend fun getBalance(accessToken: String): Result<JCoinBalance> {
         return try {
-            val response = supabaseClient.functions.invoke(
-                function = "jcoin-unified-balance",
-                headers = buildHeaders(accessToken),
-                body = buildJsonObject {
+            require(accessToken.isNotBlank()) { "Sign in required" }
+            val response = supabaseClient.functions.invoke("jcoin-unified-balance") {
+                // The SDK adds its fallback bearer before this builder; replace it.
+                headers[HttpHeaders.Authorization] = "Bearer $accessToken"
+                contentType(ContentType.Application.Json)
+                setBody(buildJsonObject {
                     put("source_business", "kanjisage")
-                }
-            )
+                }.toString())
+            }
             Log.i(TAG, "jcoin-unified-balance HTTP ${response.status.value}")
             val body = response.body<String>()
             val data = unwrapData(body)
@@ -106,18 +106,19 @@ class JCoinClient @Inject constructor(
         metadata: Map<String, String> = emptyMap()
     ): Result<JCoinEarnResponse> {
         return try {
-            val response = supabaseClient.functions.invoke(
-                function = "jcoin-unified-earn",
-                headers = buildHeaders(accessToken),
-                body = buildJsonObject {
+            require(accessToken.isNotBlank()) { "Sign in required" }
+            val response = supabaseClient.functions.invoke("jcoin-unified-earn") {
+                headers[HttpHeaders.Authorization] = "Bearer $accessToken"
+                contentType(ContentType.Application.Json)
+                setBody(buildJsonObject {
                     put("source_business", "kanjisage")
                     put("source_type", sourceType)
                     put("base_amount", baseAmount)
                     put("metadata", buildJsonObject {
                         metadata.forEach { (k, v) -> put(k, v) }
                     })
-                }
-            )
+                }.toString())
+            }
             val body = response.body<String>()
             val data = unwrapData(body)
             Result.success(json.decodeFromString<JCoinEarnResponse>(data.toString()))
@@ -141,17 +142,18 @@ class JCoinClient @Inject constructor(
         description: String
     ): Result<JCoinSpendResponse> {
         return try {
-            val response = supabaseClient.functions.invoke(
-                function = "jcoin-unified-spend",
-                headers = buildHeaders(accessToken),
-                body = buildJsonObject {
+            require(accessToken.isNotBlank()) { "Sign in required" }
+            val response = supabaseClient.functions.invoke("jcoin-unified-spend") {
+                headers[HttpHeaders.Authorization] = "Bearer $accessToken"
+                contentType(ContentType.Application.Json)
+                setBody(buildJsonObject {
                     put("mode", "direct")
                     put("source_business", "kanjisage")
                     put("source_type", sourceType)
                     put("amount", amount)
                     put("description", description)
-                }
-            )
+                }.toString())
+            }
             val body = response.body<String>()
             val data = unwrapData(body)
             Result.success(json.decodeFromString<JCoinSpendResponse>(data.toString()))
