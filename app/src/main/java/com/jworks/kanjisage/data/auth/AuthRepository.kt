@@ -16,8 +16,6 @@ import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -187,28 +185,14 @@ class AuthRepository @Inject constructor(
     }
 
     private suspend fun fetchUserRole(userId: String) {
-        try {
-            android.util.Log.d("AuthRepository", "fetchUserRole: querying for userId=$userId")
-            val result = supabaseClient.postgrest["user_roles"]
+        _isAdminOrDeveloper.value = false
+        _isAdminOrDeveloper.value = hasPrivilegedRole {
+            supabaseClient.postgrest["user_roles"]
                 .select {
                     filter {
                         eq("user_id", userId)
                     }
-                }
-            val data = result.data
-            android.util.Log.d("AuthRepository", "fetchUserRole: response=$data")
-            val items = kotlinx.serialization.json.Json.parseToJsonElement(data)
-            if (items is kotlinx.serialization.json.JsonArray && items.isNotEmpty()) {
-                val role = items[0].jsonObject["role"]?.jsonPrimitive?.content
-                android.util.Log.d("AuthRepository", "fetchUserRole: role=$role")
-                _isAdminOrDeveloper.value = role == "admin" || role == "developer"
-            } else {
-                android.util.Log.d("AuthRepository", "fetchUserRole: no rows found")
-                _isAdminOrDeveloper.value = false
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("AuthRepository", "fetchUserRole: error", e)
-            _isAdminOrDeveloper.value = false
+                }.data
         }
     }
 

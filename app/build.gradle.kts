@@ -17,20 +17,31 @@ android {
         applicationId = "com.jworks.kanjisage"
         minSdk = 26
         targetSdk = 36
-        versionCode = 24
-        versionName = "1.8.18"
+        versionCode = 25
+        versionName = "1.8.19"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
 
-        // Gemini Vision API key (read from local.properties)
+        // Build-time keys are provisioned by their owners, never committed.
         val localPropertiesFile = rootProject.file("local.properties")
         val localProperties = Properties().apply {
-            if (localPropertiesFile.exists()) load(localPropertiesFile.inputStream())
+            if (localPropertiesFile.exists()) localPropertiesFile.inputStream().use { load(it) }
         }
         buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY", "")}\"")
+
+        val jcoinAnonKey = localProperties.getProperty("JCOIN_SUPABASE_ANON_KEY", "").trim()
+        require(jcoinAnonKey.isNotEmpty()) {
+            "JCOIN_SUPABASE_ANON_KEY must be provisioned by its owner before building."
+        }
+        require(jcoinAnonKey.none { it == '\n' || it == '\r' }) {
+            "JCOIN_SUPABASE_ANON_KEY must be a single-line value."
+        }
+        val quotedJcoinAnonKey = "\"${jcoinAnonKey.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+        buildConfigField("String", "SUPABASE_ANON_KEY", quotedJcoinAnonKey)
+        buildConfigField("String", "JCOIN_SUPABASE_ANON_KEY", quotedJcoinAnonKey)
     }
 
     signingConfigs {

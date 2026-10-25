@@ -78,7 +78,6 @@ class JCoinClient @Inject constructor(
 
     private fun buildHeaders(accessToken: String): Headers = Headers.build {
         append(HttpHeaders.Authorization, "Bearer $accessToken")
-        append("X-Auth-Mode", "jwt_anonymous")
     }
 
     suspend fun getBalance(accessToken: String): Result<JCoinBalance> {
@@ -90,11 +89,12 @@ class JCoinClient @Inject constructor(
                     put("source_business", "kanjisage")
                 }
             )
+            Log.i(TAG, "jcoin-unified-balance HTTP ${response.status.value}")
             val body = response.body<String>()
             val data = unwrapData(body)
             Result.success(json.decodeFromString<JCoinBalance>(data.toString()))
         } catch (e: Exception) {
-            Log.w(TAG, "Balance fetch failed", e)
+            Log.w(TAG, "Balance fetch failed (${e.javaClass.simpleName})")
             Result.failure(e)
         }
     }

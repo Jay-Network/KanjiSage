@@ -1,5 +1,10 @@
 # KanjiSage Changelog
 
+## v1.8.19 (2026-10-25)
+- fix(auth): route auth, own-role lookup, J Coin and feedback clients to the shared J Coin endpoint. Both BuildConfig key aliases use the owner-provisioned JCOIN_SUPABASE_ANON_KEY property; remove retired hardcoded Cloud keys.
+- test(auth): cover non-admin behavior for empty, unavailable or malformed role responses, without changing offline guest sessions.
+- chore: versionName/VERSION 1.8.19, versionCode 25. Build, emulator and live isolation evidence are recorded separately; this change does not authorize Play upload or clear external-tester gates.
+
 ## v1.8.18 (2026-10-09)
 - build: raise compileSdk/targetSdk to 36 and use AGP 8.10.1 with Gradle 8.11.1 for Android 16 support.
 - build: align Kotlin, Compose and serialization plugins to 2.2.20 with KSP 2.2.20-2.0.3 to consume Billing 8.3's Kotlin 2.2 metadata.

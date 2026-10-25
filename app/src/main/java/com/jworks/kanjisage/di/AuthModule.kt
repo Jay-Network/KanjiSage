@@ -21,7 +21,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AuthModule {
 
-    /** KanjiSage auth Supabase client */
+    /** J Coin auth and own-role lookup for KanjiSage. */
     @Provides
     @Singleton
     @Named("auth")
@@ -36,7 +36,7 @@ object AuthModule {
         }
     }
 
-    /** Shared J Coin backend Supabase client (inygcrdhfmoerborxehq) */
+    /** Shared J Coin functions; balance calls forward the auth client's user token. */
     @Provides
     @Singleton
     @Named("jcoin")
