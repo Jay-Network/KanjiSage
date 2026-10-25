@@ -147,7 +147,7 @@ class JCoinMigrationTest {
         record("preconfirmation_A_complete", "next_step" to "owner_confirmation_link_click")
     }
 
-    private suspend fun feedbackIdentityCheck(email: String, fixture: Fixture) {
+    private suspend fun feedbackIdentityCheck(email: String, userId: String) {
         check(state.getString("signup_email_A", null) == email) { "Fixture identity mismatch" }
         val password = checkNotNull(state.getString("signup_password_A", null))
         // Owner labeling can outlast the session saved by confirmA; refresh before this read.
@@ -156,7 +156,7 @@ class JCoinMigrationTest {
             body = JSONObject().put("email", email).put("password", password))
         assertEquals("Feedback fixture sign-in HTTP", 200, signInStatus)
         val session = JSONObject(signInBody)
-        assertEquals("Feedback fixture user", fixture.userId, session.getJSONObject("user").getString("id"))
+        assertEquals("Feedback fixture user", userId, session.getJSONObject("user").getString("id"))
         val token = session.getString("access_token")
         check(token.isNotBlank())
         val queryEmail = URLEncoder.encode(email, "UTF-8")
@@ -309,8 +309,12 @@ class JCoinMigrationTest {
                 check(args.getString("fixtureALabelConfirmed") == "true") {
                     "Database owner must confirm A's test_account label before feedbackA"
                 }
-                feedbackIdentityCheck(emailA, loadFixture("A", emailA))
-                record("fixture_A_feedback_ready", "next_stage" to "signupB")
+                val userId = checkNotNull(state.getString("signup_user_id_A", null)) {
+                    "Missing approved A signup; do not create another user"
+                }
+                UUID.fromString(userId)
+                feedbackIdentityCheck(emailA, userId)
+                record("fixture_A_feedback_ready", "next_step" to "owner_review_stop")
                 return@runBlocking
             }
             check(state.getBoolean("feedback_A_passed", false)) { "A feedback identity check required before B" }
