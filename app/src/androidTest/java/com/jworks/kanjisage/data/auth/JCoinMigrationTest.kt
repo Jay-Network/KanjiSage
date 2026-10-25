@@ -20,12 +20,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
+import java.net.URLEncoder
 import java.util.UUID
 
 /** Explicitly opted-in emulator check, not part of routine connected tests.
  * Requires owner-confirmed fleet mailbox aliases and a temporary membership value.
- * Stages: preflight (local state + read-only health) -> signupA -> mailbox/link confirmation -> confirmA -> signupB ->
- * second mailbox/link confirmation -> probeB. Never repeat either signup stage.
+ * Stages: preflight -> signupA -> mailbox receipt -> preconfirmA -> link click -> confirmA -> signupB ->
+ * second mailbox/link confirmation -> probeB. A single owner-authorized retry is limited to the rolled-back A signup.
  * Approval: jayhub:0 dlg-254d005632a54fb5aa188587, relayed by jayhub:110.
  * No service-role credentials, earn/spend calls, feedback submissions or deletions.
  */
@@ -85,19 +86,32 @@ class JCoinMigrationTest {
     }
 
     private suspend fun signUp(label: String, email: String) {
-        check(!state.getBoolean("attempted_$label", false)) {
+        val attempted = state.getBoolean("attempted_$label", false)
+        val retryArgument = args.getString("retrySignupA")
+        val retry = label == "A" && attempted &&
+            retryArgument == "dlg-3fa32c7f6b604655895bb90e" &&
+            !state.contains("signup_user_id_A") && !state.getBoolean("retried_A", false)
+        if (label == "A" && retryArgument != null) check(retry) { "A retry authorization/state mismatch" }
+        check(!attempted || retry) {
             "$label signup already attempted; obtain owner direction before any rerun"
         }
-        val password = UUID.randomUUID().toString() + UUID.randomUUID().toString()
+        val password = if (retry) {
+            check(state.getString("signup_email_A", null) == email) { "Retry identity mismatch" }
+            checkNotNull(state.getString("signup_password_A", null))
+        } else UUID.randomUUID().toString() + UUID.randomUUID().toString()
         // Preserve the one approved signup if confirmation or a later check stops this run.
         // These values stay encrypted in the isolated emulator; never log or export them.
-        check(state.edit().putBoolean("attempted_$label", true)
+        val edit = state.edit().putBoolean("attempted_$label", true)
             .putString("signup_email_$label", email)
-            .putString("signup_password_$label", password).commit())
+            .putString("signup_password_$label", password)
+        if (retry) edit.putBoolean("retried_A", true)
+        check(edit.commit()) // Consume retry before HTTP, including on network failure.
+        if (retry) record("signup_A_retry", "authorized" to true, "retry_consumed" to true)
         val (status, body) = request("signup_$label", HttpMethod.Post, "/auth/v1/signup",
             body = JSONObject().put("email", email)
                 .put("password", password))
-        assertTrue("signup_$label HTTP=$status", status == 200 || status == 201)
+        if (label == "A") assertEquals("signup_A HTTP", 200, status)
+        else assertTrue("signup_$label HTTP=$status", status == 200 || status == 201)
         val signup = JSONObject(body)
         val userId = signup.optJSONObject("user")?.optString("id") ?: signup.optString("id")
         UUID.fromString(userId)
@@ -107,6 +121,45 @@ class JCoinMigrationTest {
             .putString("signup_token_$label", token).commit())
         record("await_mailbox_confirmation", "fixture" to label,
             "session_returned" to token.isNotBlank())
+    }
+
+    private suspend fun rejectUnconfirmedA(email: String) {
+        check(args.getString("mailboxLinkHost") == "j-coin.jworks-ai.com") {
+            "Mailbox owner must verify the confirmation link host before this stage"
+        }
+        check(state.getString("signup_email_A", null) == email) { "Fixture identity mismatch" }
+        UUID.fromString(checkNotNull(state.getString("signup_user_id_A", null)))
+        check(!state.getBoolean("preconfirmation_A_passed", false)) { "Preconfirmation check already recorded" }
+        val password = checkNotNull(state.getString("signup_password_A", null))
+        val (status, body) = request("unconfirmed_sign_in_A", HttpMethod.Post,
+            "/auth/v1/token?grant_type=password",
+            body = JSONObject().put("email", email).put("password", password))
+        val parsed = runCatching { JSONObject(body) }.getOrNull()
+        val rawCode = parsed?.optString("error_code")?.takeIf { it.isNotBlank() }
+            ?: parsed?.optString("code").orEmpty()
+        val code = rawCode.takeIf { it.matches(Regex("[a-z_]{1,64}")) } ?: "UNRECOGNIZED"
+        record("unconfirmed_sign_in_A", "http" to status, "error_code" to code)
+        assertTrue("Unconfirmed sign-in must be refused", status in setOf(400, 401, 403))
+        assertEquals("Refusal must specifically be email confirmation", "email_not_confirmed", code)
+        check(state.edit().putBoolean("preconfirmation_A_passed", true)
+            .putString("mailbox_receipt_A", args.getString("mailboxReceipt")).commit())
+        record("preconfirmation_A_complete", "next_step" to "owner_confirmation_link_click")
+    }
+
+    private suspend fun feedbackIdentityCheck(email: String, fixture: Fixture) {
+        val queryEmail = URLEncoder.encode(email, "UTF-8")
+        // Match the app's functions.invoke default: POST with no request body.
+        val (status, body) = request("feedback_identity_A", HttpMethod.Post,
+            "/functions/v1/feedback-get-updates?user_email=$queryEmail&app_id=kanjilens", fixture.token)
+        assertEquals("Feedback identity HTTP", 200, status)
+        val response = JSONObject(body)
+        val data = response.getJSONObject("data")
+        val feedback = data.getJSONArray("feedback")
+        record("feedback_identity_A", "count" to feedback.length())
+        assertEquals("New fixture feedback count", 0, feedback.length())
+        if (data.has("count")) assertEquals("Reported feedback count", 0, data.getInt("count"))
+        if (response.has("count")) assertEquals("Reported feedback count", 0, response.getInt("count"))
+        check(state.edit().putBoolean("feedback_A_passed", true).commit())
     }
 
     private suspend fun confirmFixture(label: String, email: String): Fixture {
@@ -192,11 +245,13 @@ class JCoinMigrationTest {
         check(emailA != emailB && listOf(emailA, emailB).all { it.substringAfter('@') == mailboxDomain })
         val probeMembership = requireNotNull(args.getString("probeMembership"))
         val stage = requireNotNull(args.getString("stage"))
-        check(stage in setOf("preflight", "signupA", "confirmA", "signupB", "probeB"))
+        check(stage in setOf("preflight", "signupA", "preconfirmA", "confirmA", "signupB", "probeB"))
         try {
             if (stage == "preflight") {
                 val attemptedA = state.getBoolean("attempted_A", false)
-                record("preflight_state", "ready" to true, "signup_A_attempted" to attemptedA)
+                record("preflight_state", "ready" to true, "signup_A_attempted" to attemptedA,
+                    "signup_A_retried" to state.getBoolean("retried_A", false),
+                    "signup_A_uid_present" to state.contains("signup_user_id_A"))
                 val (status, _) = request("preflight_health", HttpMethod.Get, "/auth/v1/health")
                 assertEquals("Auth health HTTP", 200, status)
                 record("preflight_complete", "remote_writes" to false)
@@ -204,17 +259,28 @@ class JCoinMigrationTest {
             }
             if (stage == "signupA") {
                 signUp("A", emailA)
-                record("await_mailbox_receipt", "next_stage" to "confirmA")
+                record("await_mailbox_receipt", "next_stage" to "preconfirmA")
                 return@runBlocking
             }
             check(!args.getString("mailboxReceipt").isNullOrBlank()) {
                 "W_Gmail must confirm first-signup delivery before continuing"
             }
+            if (stage == "preconfirmA") {
+                rejectUnconfirmedA(emailA)
+                return@runBlocking
+            }
+            check(state.getBoolean("preconfirmation_A_passed", false)) {
+                "Preconfirmation refusal must be verified before confirmation or B stages"
+            }
+            check(state.getString("mailbox_receipt_A", null) == args.getString("mailboxReceipt")) {
+                "First mailbox receipt must match the preconfirmation check"
+            }
             if (stage == "confirmA") {
-                confirmFixture("A", emailA)
+                feedbackIdentityCheck(emailA, confirmFixture("A", emailA))
                 record("fixture_A_ready", "next_stage" to "signupB")
                 return@runBlocking
             }
+            check(state.getBoolean("feedback_A_passed", false)) { "A feedback identity check required before B" }
             if (stage == "signupB") {
                 loadFixture("A", emailA)
                 signUp("B", emailB)
