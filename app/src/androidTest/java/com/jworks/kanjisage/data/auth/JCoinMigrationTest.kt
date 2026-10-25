@@ -24,7 +24,7 @@ import java.util.UUID
 
 /** Explicitly opted-in emulator check, not part of routine connected tests.
  * Requires owner-confirmed fleet mailbox aliases and a temporary membership value.
- * Stages: signupA -> mailbox/link confirmation -> confirmA -> signupB ->
+ * Stages: preflight (local state + read-only health) -> signupA -> mailbox/link confirmation -> confirmA -> signupB ->
  * second mailbox/link confirmation -> probeB. Never repeat either signup stage.
  * Approval: jayhub:0 dlg-254d005632a54fb5aa188587, relayed by jayhub:110.
  * No service-role credentials, earn/spend calls, feedback submissions or deletions.
@@ -33,7 +33,7 @@ class JCoinMigrationTest {
     private val http = HttpClient(Android) { expectSuccess = false }
     private val args = InstrumentationRegistry.getArguments()
     private val state by lazy {
-        val context = InstrumentationRegistry.getInstrumentation().context
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
         val key = MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build()
         EncryptedSharedPreferences.create(context, "jcoin_migration_20261025", key,
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
@@ -192,8 +192,16 @@ class JCoinMigrationTest {
         check(emailA != emailB && listOf(emailA, emailB).all { it.substringAfter('@') == mailboxDomain })
         val probeMembership = requireNotNull(args.getString("probeMembership"))
         val stage = requireNotNull(args.getString("stage"))
-        check(stage in setOf("signupA", "confirmA", "signupB", "probeB"))
+        check(stage in setOf("preflight", "signupA", "confirmA", "signupB", "probeB"))
         try {
+            if (stage == "preflight") {
+                val attemptedA = state.getBoolean("attempted_A", false)
+                record("preflight_state", "ready" to true, "signup_A_attempted" to attemptedA)
+                val (status, _) = request("preflight_health", HttpMethod.Get, "/auth/v1/health")
+                assertEquals("Auth health HTTP", 200, status)
+                record("preflight_complete", "remote_writes" to false)
+                return@runBlocking
+            }
             if (stage == "signupA") {
                 signUp("A", emailA)
                 record("await_mailbox_receipt", "next_stage" to "confirmA")
@@ -273,7 +281,11 @@ class JCoinMigrationTest {
             assertEquals(probeMembership, after)
             record("complete", "known_self_write_reproduced" to true)
         } catch (failure: Exception) {
-            record("stopped", "error_class" to failure.javaClass.simpleName)
+            val frames = failure.stackTrace.take(3).map {
+                "${it.className}.${it.methodName}:${it.lineNumber}"
+            }
+            record("stopped", "error_class" to failure.javaClass.simpleName,
+                "frames" to JSONArray(frames))
             throw AssertionError("Live check stopped; consult redacted KSJCoinTest events, not response bodies")
         } finally {
             http.close()
